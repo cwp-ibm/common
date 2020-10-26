@@ -79,10 +79,11 @@ parse_args "$@"
 
 IMAGE_TAG="$(basename ${EXECUTABLE})":"${BASE_IMAGE/:/_}"
 
-if [[ "${OVERRIDE}" == true ]]; then
-    echo "Overriding previous Dockerfile in context"
-    sed -n "s/BASE_IMAGE/${BASE_IMAGE}/g;s/EXECUTABLE/${EXECUTABLE}/g;w Dockerfile" Dockerfile.template
-    mv Dockerfile "${CONTEXT}"
+SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
+
+if [[ ! -f "${CONTEXT}/Dockerfile" ]] || [[ "${OVERRIDE}" == true ]]; then
+    sed -n "s/BASE_IMAGE/${BASE_IMAGE}/g;s/EXECUTABLE/${EXECUTABLE}/g;w ${SCRIPT_FOLDER}/Dockerfile" ${SCRIPT_FOLDER}/Dockerfile.template
+    mv ${SCRIPT_FOLDER}/Dockerfile "${CONTEXT}"
 fi
 
 docker build --tag "${IMAGE_TAG}" "${CONTEXT}"
