@@ -4,7 +4,7 @@ function usage()
     Upload file to Virus Total, persist the returned Hash Id to /data/results and push Hash ID to Github repo. 
 
     Usage:
-      ./create_docker_image.sh --context <CONTEXT> --executable <EXECUTABLE> [--base-image <BASE IMAGE>] [--force]
+      ./vt-file-upload.sh --file <FILE>
 
     Options:
       --help                  Show this screen
