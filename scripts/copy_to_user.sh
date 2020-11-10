@@ -24,8 +24,6 @@ fi
 
 sudo cp -r ${SOURCE} ${DESTINATION}
 
-if [[ -f ${SOURCE} ]]; then
-  SOURCE=$(basename ${SOURCE})
-fi
+SOURCE=$(basename ${SOURCE})
 
 sudo chown -R ${ACCOUNT}:${ACCOUNT} ${DESTINATION}/${SOURCE}
