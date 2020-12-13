@@ -55,7 +55,9 @@ function parse_args()
 
 parse_args "$@"
 
-source ./utils.sh
+SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
+
+source ${SCRIPT_FOLDER}/utils.sh
 
 generate_container_name $DOCKER_IMAGE
 
@@ -63,7 +65,7 @@ HOSTNAME=local
 
 CURRENT_TIME=$(date +%Y-%m-%dT%H-%M-%S)
 
-SYSFLOW_OUTPUT_FOLDER=${OUTPUT_FOLDER}/SysFlow/${CONTAINER_NAME}/${CURRENT_TIME}
+SYSFLOW_OUTPUT_FOLDER=${OUTPUT_FOLDER}/SysFlow_Analysis_Outputs/${CURRENT_TIME}
 
 mkdir --parents ${SYSFLOW_OUTPUT_FOLDER}
 
@@ -86,10 +88,12 @@ docker run \
 	-v /boot:/host/boot:ro \
 	-v /lib/modules:/host/lib/modules:ro \
 	-v /usr:/host/usr:ro \
-	-v ${LOCALHOST_VOLUME}:/mnt/data \
+	-v ${LOCALHOST_VOLUME}:${SYSFLOW_CONTAINER_OUTPUT_PATH} \
 	-e EXPORTER_ID=${HOSTNAME} \
-	-e OUTPUT=/mnt/data/test_scenario \
+	-e OUTPUT=${SYSFLOW_CONTAINER_OUTPUT_PATH}/${SYSFLOW_CONTAINER_OUTPUT_FILENAME} \
 	-e FILTER="container.name!=${SYSFLOW_CONTAINER_NAME} and container.name=${CONTAINER_NAME}" \
 	-e INTERVAL=600 \
 	--rm \
 	 sysflowtelemetry/sf-collector:edge
+
+export SYSFLOW_OUTPUT_FOLDER

@@ -25,22 +25,26 @@ function parse_args()
     while (( "$#" )); do
         case "$1" in
             --sysflow-output-folder)
-            SYSFLOW_OUTPUT_FOLDER="$2"
+            LOCALHOST_SYSFLOW_OUTPUT_FOLDER="$2"
             shift 2
             ;;
             --help)
+            echo "--help"
             usage
             exit 0
             ;;
             --) # end argument parsing
+            echo "--"
             shift
             break
             ;;
             -*|--*) # unsupported flags
+            echo "-*|--*"
             echo "Error: Unsupported flag $1" >&2
             exit 1
             ;;
             *) # preserve positional arguments
+            echo "*"
             PARAMS="$PARAMS $1"
             shift
             ;;
@@ -50,13 +54,17 @@ function parse_args()
 
 parse_args "$@"
 
+SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
+
+source ${SCRIPT_FOLDER}/utils.sh
+
 echo "*** Running SysPrint ***"
 
 docker run \
     --rm \
-    -v ${SYSFLOW_OUTPUT_FOLDER}:/mnt/data \
-    sysflowtelemetry/sysprint -o json -w /mnt/data/test_scenario /mnt/data
+    -v ${LOCALHOST_SYSFLOW_OUTPUT_FOLDER}:${SYSFLOW_CONTAINER_OUTPUT_PATH} \
+    sysflowtelemetry/sysprint -o json -w ${SYSFLOW_CONTAINER_OUTPUT_PATH}/${SYSFLOW_CONTAINER_OUTPUT_FILENAME} ${SYSFLOW_CONTAINER_OUTPUT_PATH}
 
 echo "*** Pretifying output for human readability  ***"
 
-jq . ${SYSFLOW_OUTPUT_FOLDER}/test_scenario > ${SYSFLOW_OUTPUT_FOLDER}/test_scenario.json
+jq . ${LOCALHOST_SYSFLOW_OUTPUT_FOLDER}/${SYSFLOW_CONTAINER_OUTPUT_FILENAME} > ${LOCALHOST_SYSFLOW_OUTPUT_FOLDER}/${SYSFLOW_CONTAINER_OUTPUT_FILENAME}.json

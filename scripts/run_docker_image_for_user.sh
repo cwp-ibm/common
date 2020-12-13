@@ -6,7 +6,7 @@ function usage()
     Start Sysflow monitor. 
 
     Usage:
-      ./run_docker_image.sh --user <USER> --docker-image <DOCKER-IMAGE> --duration <DURATION>
+      ./run_docker_image_for_user.sh --user <USER> --docker-image <DOCKER-IMAGE> --duration <DURATION>
 
     Options:
       --help                            Show this screen
@@ -60,8 +60,12 @@ function parse_args()
 
 parse_args "$@"
 
-source ./utils.sh
+SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
+
+source ${SCRIPT_FOLDER}/utils.sh
 
 generate_container_name $DOCKER_IMAGE
 
-runuser -l $USER -c "docker run --rm --stop-timeout $DURATION --name $CONTAINER_NAME $DOCKER_IMAGE"
+su - $USER -c "docker run --stop-timeout $DURATION --name $CONTAINER_NAME $DOCKER_IMAGE"
+
+export CONTAINER_NAME

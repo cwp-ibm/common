@@ -50,11 +50,11 @@ function parse_args()
 
 parse_args "$@"
 
-CONTAINER_NAME=${DOCKER_IMAGE/:/_}
+# CONTAINER_NAME=${DOCKER_IMAGE/:/_}
 
-echo "*** Stoping Target Docker ***"
+# echo "*** Stoping Target Docker ***"
 
-docker container stop ${CONTAINER_NAME}
+# docker container stop ${CONTAINER_NAME}
 
 echo "*** Waiting 10 seconds before Stoping SysFlow Collector ***"
 
