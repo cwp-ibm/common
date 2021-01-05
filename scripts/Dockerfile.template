@@ -2,7 +2,7 @@ FROM BASE_IMAGE
 
 WORKDIR /malware
 
-COPY . .
+COPY EXECUTABLE .
 
 RUN chmod +x EXECUTABLE
 
