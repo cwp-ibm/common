@@ -7,4 +7,6 @@
 
 # Local History for Visual Studio Code
 .history/
-scripts/vt-api-key.env
+*.*
+scripts/secrets.env
+!scripts
