@@ -73,7 +73,7 @@ function validate()
 
   if [[ ! -d ${VIRUS_TOTAL_HASH_IDS_FOLDER} ]]; 
   then
-    echo "The value for --virus-total-folder ${PENDING_UPLOAD_FOLDER} is not a directory or does not exist"
+    echo "The value for --virus-total-folder ${VIRUS_TOTAL_HASH_IDS_FOLDER} is not a directory or does not exist"
     exit 1
   fi
 
@@ -89,7 +89,7 @@ parse_args "$@"
 DEFAULT_PENDING_UPLOAD_FOLDER="/data/pending"
 DEFAULT_VIRUS_TOTAL_HASH_IDS_FOLDER="/data/virus_total"
 PENDING_UPLOAD_FOLDER=${PENDING_UPLOAD_FOLDER:-$DEFAULT_PENDING_UPLOAD_FOLDER}
-VIRUS_TOTAL_HASH_IDS_FOLDER=${VIRUS_TOTAL_HASH_IDS_FOLDER:-DEFAULT_VIRUS_TOTAL_HASH_IDS_FOLDER}
+VIRUS_TOTAL_HASH_IDS_FOLDER=${VIRUS_TOTAL_HASH_IDS_FOLDER:-$DEFAULT_VIRUS_TOTAL_HASH_IDS_FOLDER}
 SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
 source ${SCRIPT_FOLDER}/secrets.env
 
