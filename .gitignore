@@ -7,6 +7,8 @@
 
 # Local History for Visual Studio Code
 .history/
-*.*
 scripts/secrets.env
-!scripts
+/*
+!/scripts
+!README.md
+!.gitignore
