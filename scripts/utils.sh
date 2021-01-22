@@ -4,7 +4,7 @@ function exit_on_error() {
   exit_code=$1
   last_command=${@:2}
   if [ $exit_code -ne 0 ]; then
-    >&2 echo "\"${last_command}\" command failed with exit code ${exit_code}."
+    >&2 log "\"${last_command}\" command failed with exit code ${exit_code}."
     exit $exit_code
   fi
 }
@@ -42,5 +42,8 @@ function delete_account() {
   fi
 }
 
-set -o history -o histexpand
+function log(){
+  echo "[$(date +%FT%T)] - $1"
+}
 
+# set -o history -o histexpand
