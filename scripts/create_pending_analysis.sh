@@ -1,3 +1,4 @@
+#!/bin/bash
 SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
 source ${SCRIPT_FOLDER}/utils.sh
 
