@@ -57,6 +57,7 @@ export DEFAULT_PENDING_UPLOAD_FOLDER="/data/pending/upload"
 export DEFAULT_OUTPUT_FOLDER="/data/results"
 export DEFAULT_PENDING_UPLOAD_FOLDER="/data/pending"
 export DEFAULT_VIRUS_TOTAL_HASH_IDS_FOLDER="/data/virus_total"
+export DEFAULT_MALWARE_DONWLOAD_STATUS_RELATIVE_PATH="download_status/"
 
 function create_directory () {
   if [ ! -d $1 ];
