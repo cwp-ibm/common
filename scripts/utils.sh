@@ -46,4 +46,14 @@ function log(){
   echo "[$(date +%FT%T)] - $1"
 }
 
-# set -o history -o histexpand
+set -o history -o histexpand
+
+export DEFAULT_PENDING_ANALYSIS_FOLDER="/data/pending/analysis"
+export DEFAULT_DOWNLOAD_FOLDER="/data/results"
+export DEFAULT_BASE_DOWNLOAD_FOLDER="/data/malwares"
+export DEFAULT_BASE_MALWARES_HASH_LISTS_FOLDER="/data/malwares/hash_lists"
+export DEFAULT_MALWARE_DOWNLOAD_SUFFIX_PATH=""
+export DEFAULT_PENDING_UPLOAD_FOLDER="/data/pending/upload"
+export DEFAULT_OUTPUT_FOLDER="/data/results"
+export DEFAULT_PENDING_UPLOAD_FOLDER="/data/pending"
+export DEFAULT_VIRUS_TOTAL_HASH_IDS_FOLDER="/data/virus_total"
