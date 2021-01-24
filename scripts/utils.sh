@@ -57,3 +57,11 @@ export DEFAULT_PENDING_UPLOAD_FOLDER="/data/pending/upload"
 export DEFAULT_OUTPUT_FOLDER="/data/results"
 export DEFAULT_PENDING_UPLOAD_FOLDER="/data/pending"
 export DEFAULT_VIRUS_TOTAL_HASH_IDS_FOLDER="/data/virus_total"
+
+function create_directory () {
+  if [ ! -d $1 ];
+  then
+    mkdir --parent $1
+    exit_on_error $? "mkdir --parent $1"
+  fi
+}
