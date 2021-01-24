@@ -1,21 +1,21 @@
 SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
 source ${SCRIPT_FOLDER}/utils.sh
 
-DEFAULT_PENDING_ANALYSIS_FOLDER="/data/pending/analysis"
-
 function usage()
 {
     echo -n "
-    Upload Pending Sysflow analysis results to Virus Total (VT) and save VT hash Id to git repository.
+    Creates symbolic links in <PENDING_ANALYSIS_FOLDER> to malwares pending to being analyzed.
 
     Usage:
-      ./create_pending_analysis.sh [--pending-upload-folder <PU_FOLDER>] [--virus-total-folder <VT_FOLDER>]
+      ./create_pending_analysis.sh --malwares-containing-folder <MALWARES_CONTAINING_FOLDER> 
+                                  [--pending-analysis-folder <PENDING_ANALYSIS_FOLDER>] 
+                                  [--malware-files <MALWARE_FILES>]
 
     Options:
         --help                                                      Show this screen
         --malwares-containing-folder <MALWARES_CONTAINING_FOLDER>   The path of the folder containing the malwares to generate pending analysis for.
-        --pending-analysis-folder <PENDING_ANALYSIS_FOLDER>         [optional] The path to Git VT Hash ids repository.
-                                                                    Default: /data/pending/analysis
+        --pending-analysis-folder <PENDING_ANALYSIS_FOLDER>         [optional] The path to create the pending analysis symbolic links.
+                                                                    Default: $DEFAULT_PENDING_ANALYSIS_FOLDER
         --malware-files <MALWARE_FILES>                             [optional] List of specific files in <MALWARES_CONTAINING_FOLDER> to create pending analysis.
                                                                     If not specified will generate pending analysis for all files in <MALWARES_CONTAINING_FOLDER> 
     "
@@ -63,29 +63,28 @@ function parse_args()
     done
 }
 
+function main()
+{
+  parse_args "$@"
+  PENDING_ANALYSIS_FOLDER=${PENDING_ANALYSIS_FOLDER:-$DEFAULT_PENDING_ANALYSIS_FOLDER}
+  create_directory ${PENDING_ANALYSIS_FOLDER}
+  if [ -n "${MALWARE_FILES}" ];
+  then
+    MALWARE_FILES=(${MALWARE_FILES//;/ })
+  else
+    MALWARE_FILES=($(ls ${MALWARES_CONTAINING_FOLDER} -I *.Dockerfile))
+  fi
+  for ITEM in "${MALWARE_FILES[@]}"
+  do
+    OUTPUT_FOLDER_FULLPATH="$(readlink -f ${MALWARES_CONTAINING_FOLDER})/${ITEM}"
+    if [ ! -L ${PENDING_ANALYSIS_FOLDER}/${ITEM} ]
+    then
+      log "Creating symbolic link for ${OUTPUT_FOLDER_FULLPATH}" 
+      ln --symbolic ${OUTPUT_FOLDER_FULLPATH} ${PENDING_ANALYSIS_FOLDER}/${ITEM}
+    else
+      log "Symbolic link for ${OUTPUT_FOLDER_FULLPATH} already exists" 
+    fi
+  done
+}
 
-
-parse_args "$@"
-
-PENDING_ANALYSIS_FOLDER=${PENDING_ANALYSIS_FOLDER:-DEFAULT_PENDING_ANALYSIS_FOLDER}
-
-if [ ! -d ${PENDING_ANALYSIS_FOLDER} ];
-then
-  mkdir --parent ${PENDING_ANALYSIS_FOLDER}
-  exit_on_error $? "mkdir --parent ${PENDING_ANALYSIS_FOLDER}"
-fi
-
-if [ -n "${MALWARE_FILES}" ];
-then
-  MALWARE_FILES=(${MALWARE_FILES//;/ })
-else
-  MALWARE_FILES=($(ls ${MALWARES_CONTAINING_FOLDER}))
-fi
-
-CURRENT_TIME=$(date +%Y-%m-%dT%H-%M-%S)
-
-for ITEM in "${MALWARE_FILES[@]}"
-do
-  OUTPUT_FOLDER_FULLPATH="$(readlink -f ${MALWARES_CONTAINING_FOLDER})/${ITEM}"
-  ln --symbolic ${OUTPUT_FOLDER_FULLPATH} ${PENDING_ANALYSIS_FOLDER}/${ITEM}_${CURRENT_TIME}
-done
+main "$@"
