@@ -124,7 +124,7 @@ do
         rm ${TEMP_ZIP_FILE_NAME}.zip
       else
         echo "remove link"
-        # unlink ${FILE}
+        unlink ${FILE}
         LASTINDEX=$(( $PENDING_UPLOAD_FOLDER_CONTENT_SIZE - 1 ))
         if [ $INDEX -eq $LASTINDEX ];
         then
