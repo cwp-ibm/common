@@ -16,7 +16,7 @@ function usage()
         --help                                                              Show this screen
         --malwares-containing-folder <MALWARES_CONTAINING_FOLDER>           The path of the folder containing the malwares to generate pending analysis for.
         --pending-analysis-folder <PENDING_ANALYSIS_FOLDER>                 [optional] The path to create the pending analysis symbolic links.
-                                                                            Default: $DEFAULT_PENDING_ANALYSIS_FOLDER
+                                                                            Default: $DEFAULT_BASE_PENDING_ANALYSIS_FOLDER
         --malware-files <MALWARE_FILES>                                     [optional] List of specific files in <MALWARES_CONTAINING_FOLDER> to create pending analysis.
                                                                             If not specified will generate pending analysis for all files in <MALWARES_CONTAINING_FOLDER> 
         --pending-analysis-relative-path <PENDING_ANALYSIS_RELATIVE_PATH>   [optional]
@@ -73,7 +73,7 @@ function parse_args()
 function main()
 {
   parse_args "$@"
-  PENDING_ANALYSIS_FOLDER=${PENDING_ANALYSIS_FOLDER:-$DEFAULT_PENDING_ANALYSIS_FOLDER}
+  PENDING_ANALYSIS_FOLDER=${PENDING_ANALYSIS_FOLDER:-$DEFAULT_BASE_PENDING_ANALYSIS_FOLDER}
   PENDING_ANALYSIS_RELATIVE_PATH=${PENDING_ANALYSIS_RELATIVE_PATH:-""}
   create_directory ${PENDING_ANALYSIS_FOLDER}
   if [ -n "${MALWARE_FILES}" ];
