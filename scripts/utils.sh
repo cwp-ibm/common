@@ -12,8 +12,9 @@ export DEFAULT_MALWARE_DONWLOAD_STATUS_RELATIVE_PATH="download_status/"
 export DEFAULT_MAX_RUNNING_JOBS=1
 export DEFAULT_MAX_MALWARE_DOCKER_RUN_DURATION=600
 export DEFAULT_BASE_IMAGE=ubuntu:20.04
+export DEFAULT_MAX_FILE_SIZE_FOR_VT_UPLOAD=$(( 1024 * 1024 * 32 ))
+export DEFAULT_VT_UPLOADS_FOLDER="/data/vt_uploads"
 
-set -o history -o histexpand
 
 function exit_on_error() {
   exit_code=$1
@@ -72,3 +73,5 @@ function create_directory () {
 function check_if_sudo() {
   [ $( id -u ) -ne 0 ] && echo "Please run as sudo" && exit ;
 }
+
+set -o history -o histexpand
