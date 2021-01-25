@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export DEFAULT_PENDING_ANALYSIS_FOLDER="/data/pending/analysis"
+export DEFAULT_BASE_PENDING_ANALYSIS_FOLDER="/data/pending/analysis"
 export DEFAULT_DOWNLOAD_VT_ANALYSIS_FOLDER="/data/results/virus_total_analysis"
 export DEFAULT_BASE_DOWNLOAD_FOLDER="/data/malwares"
 export DEFAULT_BASE_MALWARES_HASH_LISTS_FOLDER="/data/malwares/hash_lists"
