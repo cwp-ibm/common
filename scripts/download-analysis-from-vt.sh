@@ -81,14 +81,15 @@ parse_args "$@"
 
 validate
 
-DEFAULT_DOWNLOAD_FOLDER="/data/reslts"
-SYSFLOW_CONTAINER_OUTPUT_FILENAME=sysflow.log
-SYSFLOW_CONTAINER_OUTPUT_PATH=/mnt/data
-DOWNLOAD_FOLDER=${DOWNLOAD_FOLDER:-$DEFAULT_DOWNLOAD_FOLDER}
-mkdir -p ${DOWNLOAD_FOLDER}/${DOWNLOAD_DATE}
-exec 1>>${DOWNLOAD_FOLDER}/${DOWNLOAD_DATE}/download.log 2>&1
 SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
 source ${SCRIPT_FOLDER}/secrets.env
+source ${SCRIPT_FOLDER}/utils.sh
+
+SYSFLOW_CONTAINER_OUTPUT_FILENAME=sysflow.log
+SYSFLOW_CONTAINER_OUTPUT_PATH=/mnt/data
+DOWNLOAD_FOLDER=${DOWNLOAD_FOLDER:-$DEFAULT_DOWNLOAD_VT_ANALYSIS_FOLDER}
+mkdir -p ${DOWNLOAD_FOLDER}/${DOWNLOAD_DATE}
+exec 1>>${DOWNLOAD_FOLDER}/${DOWNLOAD_DATE}/download.log 2>&1
 
 log "$(seq 40 | sed 's/.*/*/' | tr -d '\n') START $(seq 40 | sed 's/.*/*/' | tr -d '\n')"
 log "Fetching all content in Github Repository for date ${DOWNLOAD_DATE}"
