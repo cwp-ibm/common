@@ -56,9 +56,9 @@ function parse_args()
 
 function validate() 
 {
-  [ ${PENDING_UPLOAD_FOLDER} == ${DEFAULT_PENDING_UPLOAD_FOLDER} ] && check_if_sudo;
-  [ ${VIRUS_TOTAL_HASH_IDS_FOLDER} == ${DEFAULT_VIRUS_TOTAL_HASH_IDS_FOLDER} ] && check_if_sudo;
-  [ ${VT_UPLOADS_FOLDER} == ${DEFAULT_VT_UPLOADS_FOLDER} ] && check_if_sudo;
+  [ ${PENDING_UPLOAD_FOLDER} == ${DEFAULT_PENDING_UPLOAD_FOLDER} ] && exit_if_not_sudo;
+  [ ${VIRUS_TOTAL_HASH_IDS_FOLDER} == ${DEFAULT_VIRUS_TOTAL_HASH_IDS_FOLDER} ] && exit_if_not_sudo;
+  [ ${VT_UPLOADS_FOLDER} == ${DEFAULT_VT_UPLOADS_FOLDER} ] && exit_if_not_sudo;
 
   create_directory ${PENDING_UPLOAD_FOLDER}
   create_directory ${VIRUS_TOTAL_HASH_IDS_FOLDER}

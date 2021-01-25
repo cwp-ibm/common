@@ -70,8 +70,12 @@ function create_directory () {
   fi
 }
 
-function check_if_sudo() {
-  [ $( id -u ) -ne 0 ] && echo "Please run as sudo" && exit ;
+function exit_if_not_sudo() {
+  if [ $( id -u ) -ne 0 ] 
+  then
+    echo "Please run as sudo"
+    exit
+  fi
 }
 
 set -o history -o histexpand
