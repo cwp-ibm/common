@@ -3,42 +3,39 @@
 function usage()
 {
     echo -n "
-    Perform full Sysflow Analyis on executable. 
+    Perform Sysflow Analyis on files located in <PENDING_ANALYSIS_FOLDER>. 
 
     Usage:
-      ./multiple-docker-malware-analysis.sh --malwares-folder <MALWARES-FOLDER> 
+      ./multiple-docker-malware-analysis.sh [--pending-analysis-folder <PENDING_ANALYSIS_FOLDER>]
+                                            [--max-parallel-analysis <MAX-PARALLEL-ANALYSIS>]
                                             [--max-duration <MAX-DURATION>] 
                                             [--output <OUTPUT>] 
+                                            [--pending-upload-folder <PENDING_UPLOAD_FOLDER>]
                                             [--override-dockerfile] 
-                                            [--max-parallel-analysis <MAX-PARALLEL-ANALYSIS>]
 
     Options:
-      --help                                            Show this screen
-      --malwares-folder <MALWARES-FOLDER>               The path of the executables to analyze
-      --max-parallel-analysis <MAX-PARALLEL-ANALYSIS>   [optional] The number of malwares to analyze in parallel
-                                                        Default: ${DEFAULT_MAX_RUNNING_JOBS}.
-      --max-duration <MAX-DURATION>                     [optional] The max duration in seconds to perform Sysflow Analysis on each malware
-                                                        Default: ${DEFAULT_MAX_MALWARE_DOCKER_RUN_DURATION} seconds.
-      --output <OUTPUT>                                 [optional] The base folder to save analysis outputs
-                                                        Default: ${DEFAULT_SYSFLOW_ANALYSIS_OUTPUT_FOLDER}.   
-      --override-dockerfile                             [optional] Override the Dockerfile
-      --pending-upload-folder <PENDING_UPLOAD_FOLDER>   [optional]
-                                                        Default: ${DEFAULT_PENDING_UPLOAD_FOLDER}
+      --help                                                Show this screen
+      --pending-analysis-folder <PENDING_ANALYSIS_FOLDER>   [optional] The folder path containing symbolic links to executables for analyze
+                                                            Default: ${DEFAULT_BASE_PENDING_ANALYSIS_FOLDER}
+      --max-parallel-analysis <MAX-PARALLEL-ANALYSIS>       [optional] The number of malwares to analyze in parallel
+                                                            Default: ${DEFAULT_MAX_RUNNING_JOBS}.
+      --max-duration <MAX-DURATION>                         [optional] The max duration in seconds to perform Sysflow Analysis on each malware
+                                                            Default: ${DEFAULT_MAX_MALWARE_DOCKER_RUN_DURATION} seconds.
+      --output <OUTPUT>                                     [optional] The base folder to save analysis outputs
+                                                            Default: ${DEFAULT_SYSFLOW_ANALYSIS_OUTPUT_FOLDER}.   
+      --pending-upload-folder <PENDING_UPLOAD_FOLDER>       [optional] The folder to save symbolic link to analysis results
+                                                            Default: ${DEFAULT_PENDING_UPLOAD_FOLDER}
+      --override-dockerfile                                 [optional] Override the Dockerfile
     "
     echo
 }
 
 function parse_args()
 {
-    if [[ "$#" -eq 0 ]]; then
-        usage
-        exit 1
-    fi
-
     while (( "$#" )); do
         case "$1" in
-            --malwares-folder)
-            MALWARES_FOLDER="$2"
+            --pending-analysis-folder)
+            PENDING_ANALYSIS_FOLDER="$2"
             shift 2
             ;;
             --max-parallel-analysis)
@@ -65,15 +62,6 @@ function parse_args()
     done
 }
 
-function validate()
-{
-    if [[ -z ${MALWARES_FOLDER} ]]; 
-    then
-        usage
-        exit 0
-    fi
-}
-
 function running_jobs() {
     local __RESULTVAR=$1
     local __JOBS=`jobs -r -p`    
@@ -91,12 +79,12 @@ function main()
   source ${SCRIPT_FOLDER}/utils.sh
   
   parse_args "$@"
-  validate
 
+  PENDING_ANALYSIS_FOLDER=${PENDING_ANALYSIS_FOLDER:-$DEFAULT_BASE_PENDING_ANALYSIS_FOLDER}
   PENDING_UPLOAD_FOLDER=${PENDING_UPLOAD_FOLDER:-$DEFAULT_PENDING_UPLOAD_FOLDER}
   MAX_RUNNING_JOBS=${MAX_RUNNING_JOBS:-$DEFAULT_MAX_RUNNING_JOBS}
 
-  MALWARE_FILE_NAMES=(`find ${MALWARES_FOLDER} -type l -o -type f -a ! -name "*.Dockerfile"`)
+  MALWARE_FILE_NAMES=(`find ${PENDING_ANALYSIS_FOLDER} -type l -o -type f -a ! -name "*.Dockerfile"`)
   TOTAL_MALWARES_COUNTER=${#MALWARE_FILE_NAMES[@]}
   NEXT_MALWARE_INDEX=0
   CURRENT_TIME=$(date +%Y-%m-%dT%H-%M-%S)
@@ -111,7 +99,7 @@ function main()
       for INDEX in $( seq $NEXT_MALWARE_INDEX $((LIMIT - 1)));
       do
         MALWARE_FILE_NAME=${MALWARE_FILE_NAMES[INDEX]}
-        EXECUTABLE_RELATIVE_PATH=$(dirname $(echo ${MALWARE_FILE_NAME} | sed "s|${MALWARES_FOLDER}/||"))
+        EXECUTABLE_RELATIVE_PATH=$(dirname $(echo ${MALWARE_FILE_NAME} | sed "s|${PENDING_ANALYSIS_FOLDER}/||"))
         EXECUTABLE=`readlink -f ${MALWARE_FILE_NAMES[INDEX]}`
         echo "Starting to analysis ${EXECUTABLE}"
         EXECUTABLE_OUTPUT_FOLDER=${OUTPUT_FOLDER:-${DEFAULT_SYSFLOW_ANALYSIS_OUTPUT_FOLDER}}
