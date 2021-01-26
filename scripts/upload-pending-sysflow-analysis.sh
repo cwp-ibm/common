@@ -116,6 +116,7 @@ function push_to_github()
 }
 
 function main() {
+  set -e
   SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
   source ${SCRIPT_FOLDER}/secrets.env
   source ${SCRIPT_FOLDER}/utils.sh
@@ -128,23 +129,23 @@ function main() {
 
   validate
 
+  exec >>${VT_UPLOADS_FOLDER}/upload.log 2>&1
+
   DRY_RUN=${DRY_RUN:-false}
+  SYSFLOW_LOG_FILE_PREFIX=sysflow.log.*
+  PENDING_UPLOAD_FOLDER_CONTENT_SIZE=${#PENDING_UPLOAD_FOLDER_CONTENT[@]}
   PENDING_UPLOAD_FOLDER_FULLPATH=$(readlink -f ${PENDING_UPLOAD_FOLDER})
   PENDING_UPLOAD_FOLDER_CONTENT=$(find ${PENDING_UPLOAD_FOLDER} -type l)
-  SYSFLOW_LOG_FILE_PREFIX=sysflow.log.*
-  DOCKER_LOG_FILE_PATH=Docker/docker.log
-  TEMP_ZIP_FILE_NAME=temp
-  PENDING_UPLOAD_FOLDER_CONTENT_SIZE=${#PENDING_UPLOAD_FOLDER_CONTENT[@]}
-  INDEX=0
   CURRENT_DATETIME=$(date +%Y-%m-%dT%H:%M:%S:%3N)
   TEMP_ZIP_FILE_NAME="temp_${CURRENT_DATETIME}.zip"
 
   cd $(readlink -f ${VT_UPLOADS_FOLDER})
+  log "$(seq 40 | sed 's/.*/*/' | tr -d '\n') START $(seq 40 | sed 's/.*/*/' | tr -d '\n')"
   for ITEM in $PENDING_UPLOAD_FOLDER_CONTENT
   do
-    RELATIVE_PATH=${ITEM/"pending/upload/"/}
+    RELATIVE_PATH=${ITEM/${PENDING_UPLOAD_FOLDER}/}
     RELATIVE_PATH_PATH_PARTS=(${RELATIVE_PATH//\// })
-    mkdir --parent $(dirname ${RELATIVE_PATH})
+    create_directory $(dirname ${RELATIVE_PATH})
     cp -r $(readlink -f ${PENDING_UPLOAD_FOLDER_FULLPATH}/${RELATIVE_PATH}) $(dirname ${RELATIVE_PATH})
     zip ${TEMP_ZIP_FILE_NAME} ${RELATIVE_PATH}/${SYSFLOW_LOG_FILE_PREFIX}
     FILE_SIZE=$(stat -c %s ${TEMP_ZIP_FILE_NAME})
@@ -155,21 +156,22 @@ function main() {
       exit_on_error $? "zip ${TEMP_ZIP_FILE_NAME} ${FILE}/${SYSFLOW_LOG_FILE_PREFIX}"
       upload_to_VT ${PWD}/${TEMP_ZIP_FILE_NAME} VT_HASH_ID
       push_to_github ${VT_HASH_ID}
-      mv ${TEMP_ZIP_FILE_NAME} ${VT_HASH_ID}.zip 
+      mv ${TEMP_ZIP_FILE_NAME} "${VT_HASH_ID}.zip" 
       CURRENT_DATETIME=$(date +%Y-%m-%dT%H:%M:%S:%3N)
       TEMP_ZIP_FILE_NAME="temp_${CURRENT_DATETIME}.zip"
-      zip ${TEMP_ZIP_FILE_NAME} ${RELATIVE_PATH}/sysflow.log.*
+      zip ${TEMP_ZIP_FILE_NAME} ${RELATIVE_PATH}/${SYSFLOW_LOG_FILE_PREFIX}
     fi
     rm -rf ${RELATIVE_PATH_PATH_PARTS[0]}
-    unlink ${PENDING_UPLOAD_FOLDER_FULLPATH}/${RELATIVE_PATH}
+    [ $DRY_RUN == false ] && unlink ${PENDING_UPLOAD_FOLDER_FULLPATH}/${RELATIVE_PATH}
   done
   
   if [ -f ${TEMP_ZIP_FILE_NAME} ]
   then
     upload_to_VT ${PWD}/${TEMP_ZIP_FILE_NAME} VT_HASH_ID
     push_to_github ${VT_HASH_ID}
-    mv ${TEMP_ZIP_FILE_NAME} ${VT_HASH_ID}.zip
+    mv ${TEMP_ZIP_FILE_NAME} "${VT_HASH_ID}.zip"
   fi
+  log "$(seq 41 | sed 's/.*/*/' | tr -d '\n') END $(seq 41 | sed 's/.*/*/' | tr -d '\n')"
 }
 
 main "$@"
