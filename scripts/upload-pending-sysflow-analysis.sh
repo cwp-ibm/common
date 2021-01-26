@@ -147,8 +147,16 @@ function main() {
   RUN_ID=$(date +%Y-%m-%dT%H:%M:%S)
   ANALYSIS_SKIPPED=false
 
+  START_PADDING=`seq 40 | sed 's/.*/=/' | tr -d '\n'`
+  END_PADDING=$(seq 41 | sed 's/.*/=/' | tr -d '\n')
+  [ $DRY_RUN == true ] && TITLE_PREFIX="DRY RUN"
+  LOG_FILE_START_SESSION_TEXT="${START_PADDING} ${TITLE_PREFIX} START |${RUN_ID}| ${START_PADDING}"
+  LOG_FILE_END_SESSION_TEXT="${END_PADDING} ${TITLE_PREFIX} END |${RUN_ID}| ${END_PADDING}"
+
+  [ $DRY_RUN == true ] && FINAL_FILE_PREFIX="dry-run-"
+
   cd $(readlink -f ${VT_UPLOADS_FOLDER})
-  log "$(seq 40 | sed 's/.*/*/' | tr -d '\n') START {${RUN_ID}} $(seq 40 | sed 's/.*/*/' | tr -d '\n')"
+  log "${LOG_FILE_START_SESSION_TEXT}"
   for ITEM in $PENDING_UPLOAD_FOLDER_CONTENT
   do
     RELATIVE_PATH=${ITEM/${PENDING_UPLOAD_FOLDER}\//}
@@ -171,7 +179,7 @@ function main() {
         upload_to_VT ${PWD}/${TEMP_ZIP_FILE_NAME} VT_HASH_ID
         push_to_github ${VT_HASH_ID}
         log "*** Rename ${TEMP_ZIP_FILE_NAME} to ${VT_HASH_ID}.zip"
-        mv ${TEMP_ZIP_FILE_NAME} "${VT_HASH_ID}.zip" 
+        mv ${TEMP_ZIP_FILE_NAME} "${FINAL_FILE_PREFIX}${VT_HASH_ID}.zip" 
         CURRENT_DATETIME=$(date +%Y-%m-%dT%H:%M:%S:%3N)
         TEMP_ZIP_FILE_NAME="temp_${CURRENT_DATETIME}.zip"
         zip ${TEMP_ZIP_FILE_NAME} ${EARLIST_SYSFLOW_LOG_FILE}
@@ -180,7 +188,7 @@ function main() {
       if [ $ANALYSIS_SKIPPED == false ]
       then
         ANALYSIS_SKIPPED=true
-        log "$(seq 40 | sed 's/.*/*/' | tr -d '\n') START {${RUN_ID}} $(seq 40 | sed 's/.*/*/' | tr -d '\n')" >> upload.skipped.analysis.log
+        log "${LOG_FILE_START_SESSION_TEXT}" >> upload.skipped.analysis.log
       fi
       log "Skipped uploading analysis of $(dirname $(readlink -f ${PENDING_UPLOAD_FOLDER}/${EARLIST_SYSFLOW_LOG_FILE}))" >> upload.skipped.analysis.log
     fi
@@ -194,14 +202,14 @@ function main() {
     upload_to_VT ${PWD}/${TEMP_ZIP_FILE_NAME} VT_HASH_ID
     push_to_github ${VT_HASH_ID}
     log "*** Rename ${TEMP_ZIP_FILE_NAME} to ${VT_HASH_ID}.zip"
-    mv ${TEMP_ZIP_FILE_NAME} "${VT_HASH_ID}.zip"
+    mv ${TEMP_ZIP_FILE_NAME} "${FINAL_FILE_PREFIX}${VT_HASH_ID}.zip"
   fi
-  log "$(seq 41 | sed 's/.*/*/' | tr -d '\n') END {${RUN_ID}} $(seq 41 | sed 's/.*/*/' | tr -d '\n')"
+  log "${LOG_FILE_END_SESSION_TEXT}"
   echo
 
   if [ $ANALYSIS_SKIPPED == true ]
   then
-    log "$(seq 41 | sed 's/.*/*/' | tr -d '\n') END {${RUN_ID}} $(seq 41 | sed 's/.*/*/' | tr -d '\n')" >> upload.skipped.analysis.log
+    log "${LOG_FILE_END_SESSION_TEXT}" >> upload.skipped.analysis.log
     echo >> upload.skipped.analysis.log
   fi
 }
