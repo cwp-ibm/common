@@ -5,22 +5,27 @@ source ${SCRIPT_FOLDER}/utils.sh
 function usage()
 {
     echo -n "
-    Creates symbolic links in <PENDING_ANALYSIS_FOLDER> to malwares pending to being analyzed.
+    Creates symbolic links in <PENDING_ANALYSIS_FOLDER> for malwares which have not been analyzed.
+    The criteria of malwares not analyzed, presence of dockerfile.
 
     Usage:
       ./create_pending_analysis.sh --malwares-containing-folder <MALWARES_CONTAINING_FOLDER> 
-                                  [--pending-analysis-folder <PENDING_ANALYSIS_FOLDER>] 
                                   [--malware-files <MALWARE_FILES>]
+                                  [--pending-analysis-folder <PENDING_ANALYSIS_FOLDER>]
+                                  [--pending-analysis-relative-path <PENDING_ANALYSIS_RELATIVE_PATH>] 
 
     Options:
         --help                                                              Show this screen
         --malwares-containing-folder <MALWARES_CONTAINING_FOLDER>           The path of the folder containing the malwares to generate pending analysis for.
+        --malware-files <MALWARE_FILES>                                     [optional] List of specific files in <MALWARES_CONTAINING_FOLDER> to create pending analysis.
+                                                                            If not specified will generate pending analysis for all non analyzed malwares 
+                                                                            in <MALWARES_CONTAINING_FOLDER> 
         --pending-analysis-folder <PENDING_ANALYSIS_FOLDER>                 [optional] The path to create the pending analysis symbolic links.
                                                                             Default: $DEFAULT_BASE_PENDING_ANALYSIS_FOLDER
-        --malware-files <MALWARE_FILES>                                     [optional] List of specific files in <MALWARES_CONTAINING_FOLDER> to create pending analysis.
-                                                                            If not specified will generate pending analysis for all files in <MALWARES_CONTAINING_FOLDER> 
-        --pending-analysis-relative-path <PENDING_ANALYSIS_RELATIVE_PATH>   [optional]
+        --pending-analysis-relative-path <PENDING_ANALYSIS_RELATIVE_PATH>   [optionalpend]
                                                                             Defaults to empty string
+        --force                                                             [optionsl] Create pending analysis for all malwares in <MALWARES_CONTAINING_FOLDER>
+                                                                            even those how have been analyzed before.
     "
     echo
 }
@@ -50,6 +55,10 @@ function parse_args()
             PENDING_ANALYSIS_RELATIVE_PATH="$2"
             shift 2
             ;;
+            --force)
+            FORCE=true
+            shift 1
+            ;;
             --help)
             usage
             exit 0
@@ -72,7 +81,9 @@ function parse_args()
 
 function main()
 {
+  set -e
   parse_args "$@"
+  FORCE=${FORCE:-false}
   PENDING_ANALYSIS_FOLDER=${PENDING_ANALYSIS_FOLDER:-$DEFAULT_BASE_PENDING_ANALYSIS_FOLDER}
   PENDING_ANALYSIS_RELATIVE_PATH=${PENDING_ANALYSIS_RELATIVE_PATH:-""}
   create_directory ${PENDING_ANALYSIS_FOLDER}
@@ -80,7 +91,14 @@ function main()
   then
     MALWARE_FILES=(${MALWARE_FILES//;/ })
   else
-    MALWARE_FILES=($(ls ${MALWARES_CONTAINING_FOLDER} -I *.Dockerfile))
+    if [ $FORCE == true ]
+    then
+      echo "1"
+      MALWARE_FILES=($(ls ${MALWARES_CONTAINING_FOLDER} -I *.Dockerfile))
+    else
+      echo "2"
+      MALWARE_FILES=($(find ${MALWARES_CONTAINING_FOLDER} -type f ! -name *.Dockerfile -exec bash -c '[ ! -f {}.Dockerfile ] && echo $(basename {})' \; ))
+    fi
   fi
   for ITEM in "${MALWARE_FILES[@]}"
   do
