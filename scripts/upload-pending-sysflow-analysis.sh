@@ -34,10 +34,6 @@ function parse_args()
             VIRUS_TOTAL_HASH_IDS_FOLDER="$2"
             shift 2
             ;;
-            --dry-run)
-            DRY_RUN=true
-            shift 1
-            ;;
             --vt-uploads-folder)
             VT_UPLOADS_FOLDER="$2"
             shift 2
@@ -45,6 +41,14 @@ function parse_args()
             --help)
             usage
             exit 0
+            ;;
+            --dry-run)
+            DRY_RUN=true
+            shift 1
+            ;;
+            --max-sysflow-analyis-file-size)
+            MAX_SYSFLOW_ANALYIS_FILE_SIZE="$2"
+            shift 1
             ;;
             *) # preserve positional arguments
             PARAMS="$PARAMS $1"
@@ -131,6 +135,7 @@ function main() {
 
   exec >>${VT_UPLOADS_FOLDER}/upload.log 2>&1
 
+  MAX_SYSFLOW_ANALYIS_FILE_SIZE=${MAX_SYSFLOW_ANALYIS_FILE_SIZE:-$DEFAULT_MAX_SYSFLOW_ANALYIS_FILE_SIZE}
   DRY_RUN=${DRY_RUN:-false}
   SYSFLOW_LOG_FILE_PREFIX=sysflow.log.*
   PENDING_UPLOAD_FOLDER_CONTENT_SIZE=${#PENDING_UPLOAD_FOLDER_CONTENT[@]}
@@ -139,28 +144,47 @@ function main() {
   CURRENT_DATETIME=$(date +%Y-%m-%dT%H:%M:%S:%3N)
   TEMP_ZIP_FILE_NAME="temp_${CURRENT_DATETIME}.zip"
 
+  RUN_ID=$(date +%Y-%m-%dT%H:%M:%S)
+  ANALYSIS_SKIPPED=false
+
   cd $(readlink -f ${VT_UPLOADS_FOLDER})
-  log "$(seq 40 | sed 's/.*/*/' | tr -d '\n') START $(seq 40 | sed 's/.*/*/' | tr -d '\n')"
+  log "$(seq 40 | sed 's/.*/*/' | tr -d '\n') START {${RUN_ID}} $(seq 40 | sed 's/.*/*/' | tr -d '\n')"
   for ITEM in $PENDING_UPLOAD_FOLDER_CONTENT
   do
-    RELATIVE_PATH=${ITEM/${PENDING_UPLOAD_FOLDER}/}
+    RELATIVE_PATH=${ITEM/${PENDING_UPLOAD_FOLDER}\//}
     RELATIVE_PATH_PATH_PARTS=(${RELATIVE_PATH//\// })
     create_directory $(dirname ${RELATIVE_PATH})
     cp -r $(readlink -f ${PENDING_UPLOAD_FOLDER_FULLPATH}/${RELATIVE_PATH}) $(dirname ${RELATIVE_PATH})
-    zip ${TEMP_ZIP_FILE_NAME} ${RELATIVE_PATH}/${SYSFLOW_LOG_FILE_PREFIX}
-    FILE_SIZE=$(stat -c %s ${TEMP_ZIP_FILE_NAME})
-    if [ $FILE_SIZE -gt $DEFAULT_MAX_FILE_SIZE_FOR_VT_UPLOAD ];
+
+    ASC_SORTED_SYSFLOW_LOG_FILES=($(ls -t $(find ${RELATIVE_PATH} -name sysflow.log.*)))
+    EARLIST_SYSFLOW_LOG_FILE=${ASC_SORTED_SYSFLOW_LOG_FILES[0]}
+    EARLIST_SYSFLOW_LOG_FILE_SIZE=$(stat -c %s ${EARLIST_SYSFLOW_LOG_FILE})
+    if [ ${EARLIST_SYSFLOW_LOG_FILE_SIZE} -le $MAX_SYSFLOW_ANALYIS_FILE_SIZE ]
     then
-      log "*** ${TEMP_ZIP_FILE_NAME} size passed threshold of $DEFAULT_MAX_FILE_SIZE_FOR_VT_UPLOAD, removing last addition ***"
-      zip -d ${TEMP_ZIP_FILE_NAME} ${RELATIVE_PATH}/${SYSFLOW_LOG_FILE_PREFIX}
-      exit_on_error $? "zip ${TEMP_ZIP_FILE_NAME} ${FILE}/${SYSFLOW_LOG_FILE_PREFIX}"
-      upload_to_VT ${PWD}/${TEMP_ZIP_FILE_NAME} VT_HASH_ID
-      push_to_github ${VT_HASH_ID}
-      mv ${TEMP_ZIP_FILE_NAME} "${VT_HASH_ID}.zip" 
-      CURRENT_DATETIME=$(date +%Y-%m-%dT%H:%M:%S:%3N)
-      TEMP_ZIP_FILE_NAME="temp_${CURRENT_DATETIME}.zip"
-      zip ${TEMP_ZIP_FILE_NAME} ${RELATIVE_PATH}/${SYSFLOW_LOG_FILE_PREFIX}
+      zip ${TEMP_ZIP_FILE_NAME} ${EARLIST_SYSFLOW_LOG_FILE}
+      FILE_SIZE=$(stat -c %s ${TEMP_ZIP_FILE_NAME})
+      if [ $FILE_SIZE -gt $DEFAULT_MAX_FILE_SIZE_FOR_VT_UPLOAD ];
+      then
+        log "*** ${TEMP_ZIP_FILE_NAME} size passed threshold of $DEFAULT_MAX_FILE_SIZE_FOR_VT_UPLOAD, removing last addition ***"
+        zip -d ${TEMP_ZIP_FILE_NAME} ${EARLIST_SYSFLOW_LOG_FILE}
+        exit_on_error $? "zip ${TEMP_ZIP_FILE_NAME} ${EARLIST_SYSFLOW_LOG_FILE}"
+        upload_to_VT ${PWD}/${TEMP_ZIP_FILE_NAME} VT_HASH_ID
+        push_to_github ${VT_HASH_ID}
+        log "*** Rename ${TEMP_ZIP_FILE_NAME} to ${VT_HASH_ID}.zip"
+        mv ${TEMP_ZIP_FILE_NAME} "${VT_HASH_ID}.zip" 
+        CURRENT_DATETIME=$(date +%Y-%m-%dT%H:%M:%S:%3N)
+        TEMP_ZIP_FILE_NAME="temp_${CURRENT_DATETIME}.zip"
+        zip ${TEMP_ZIP_FILE_NAME} ${EARLIST_SYSFLOW_LOG_FILE}
+      fi
+    else
+      if [ $ANALYSIS_SKIPPED == false ]
+      then
+        ANALYSIS_SKIPPED=true
+        log "$(seq 40 | sed 's/.*/*/' | tr -d '\n') START {${RUN_ID}} $(seq 40 | sed 's/.*/*/' | tr -d '\n')" >> upload.skipped.analysis.log
+      fi
+      log "Skipped uploading analysis of $(dirname $(readlink -f ${PENDING_UPLOAD_FOLDER}/${EARLIST_SYSFLOW_LOG_FILE}))" >> upload.skipped.analysis.log
     fi
+
     rm -rf ${RELATIVE_PATH_PATH_PARTS[0]}
     [ $DRY_RUN == false ] && unlink ${PENDING_UPLOAD_FOLDER_FULLPATH}/${RELATIVE_PATH}
   done
@@ -169,9 +193,17 @@ function main() {
   then
     upload_to_VT ${PWD}/${TEMP_ZIP_FILE_NAME} VT_HASH_ID
     push_to_github ${VT_HASH_ID}
+    log "*** Rename ${TEMP_ZIP_FILE_NAME} to ${VT_HASH_ID}.zip"
     mv ${TEMP_ZIP_FILE_NAME} "${VT_HASH_ID}.zip"
   fi
-  log "$(seq 41 | sed 's/.*/*/' | tr -d '\n') END $(seq 41 | sed 's/.*/*/' | tr -d '\n')"
+  log "$(seq 41 | sed 's/.*/*/' | tr -d '\n') END {${RUN_ID}} $(seq 41 | sed 's/.*/*/' | tr -d '\n')"
+  echo
+
+  if [ $ANALYSIS_SKIPPED == true ]
+  then
+    log "$(seq 41 | sed 's/.*/*/' | tr -d '\n') END {${RUN_ID}} $(seq 41 | sed 's/.*/*/' | tr -d '\n')" >> upload.skipped.analysis.log
+    echo >> upload.skipped.analysis.log
+  fi
 }
 
 main "$@"

@@ -14,7 +14,7 @@ export DEFAULT_MAX_MALWARE_DOCKER_RUN_DURATION=600
 export DEFAULT_BASE_IMAGE=ubuntu:20.04
 export DEFAULT_MAX_FILE_SIZE_FOR_VT_UPLOAD=$(( 1024 * 1024 * 32 ))
 export DEFAULT_VT_UPLOADS_FOLDER="/data/vt_uploads"
-
+export DEFAULT_MAX_SYSFLOW_ANALYIS_FILE_SIZE=$(( 1024 * 1024 * 5 ))
 
 function exit_on_error() {
   exit_code=$1
