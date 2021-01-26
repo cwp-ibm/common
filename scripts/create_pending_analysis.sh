@@ -93,10 +93,8 @@ function main()
   else
     if [ $FORCE == true ]
     then
-      echo "1"
       MALWARE_FILES=($(ls ${MALWARES_CONTAINING_FOLDER} -I *.Dockerfile))
     else
-      echo "2"
       MALWARE_FILES=($(find ${MALWARES_CONTAINING_FOLDER} -type f ! -name *.Dockerfile -exec bash -c '[ ! -f {}.Dockerfile ] && echo $(basename {})' \; ))
     fi
   fi
