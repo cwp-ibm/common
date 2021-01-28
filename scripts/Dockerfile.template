@@ -2,7 +2,7 @@ FROM BASE_IMAGE
 
 RUN mkdir --parent /home/malware
 
-RUN useradd -r --user-group -u 1002 -d /home/malware -s /sbin/nologin malware
+# RUN useradd -r --user-group -u 1002 -d /home/malware -s /sbin/nologin malware
 
 WORKDIR /home/malware
 
@@ -10,6 +10,6 @@ COPY EXECUTABLE .
 
 RUN chmod +x EXECUTABLE
 
-USER malware
+# USER malware
 
 ENTRYPOINT ./EXECUTABLE
