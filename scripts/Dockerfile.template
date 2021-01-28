@@ -1,5 +1,7 @@
 FROM BASE_IMAGE
 
+RUN apt-get update && apt-get install -y iputils-ping && apt-get install -y git
+
 RUN mkdir --parent /home/malware
 
 # RUN useradd -r --user-group -u 1002 -d /home/malware -s /sbin/nologin malware
