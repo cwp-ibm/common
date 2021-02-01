@@ -125,17 +125,12 @@ do
       unzip -q ${FOLDER}/temp.zip -d ${FOLDER}
       log "Parsing all Sysflow Analysis logs found under ${GITHUB_REL_PATH}"
       cd ${FOLDER}
-      FOLDER_DIRECTORIES=$(ls -d */)
+      FOLDER_DIRECTORIES=$(find . -type f -name sysflow.log.* -exec dirname {} \;)
       for DIRECTORY in ${FOLDER_DIRECTORIES}
-      do 
-        NEW_DIRECTORY=${DIRECTORY/_//}
-        mkdir -p $NEW_DIRECTORY
-        docker run \
-            --rm \
-            -v ${PWD}/${DIRECTORY}:${SYSFLOW_CONTAINER_OUTPUT_PATH} \
-            sysflowtelemetry/sysprint -o json -w ${SYSFLOW_CONTAINER_OUTPUT_PATH}/${SYSFLOW_CONTAINER_OUTPUT_FILENAME} ${SYSFLOW_CONTAINER_OUTPUT_PATH}
-        mv $DIRECTORY/* $NEW_DIRECTORY
-        rm -rf $DIRECTORY
+      do
+        docker run --rm \
+                  -v ${PWD}/${DIRECTORY}:${SYSFLOW_CONTAINER_OUTPUT_PATH} \
+                  sysflowtelemetry/sysprint -o json -w ${SYSFLOW_CONTAINER_OUTPUT_PATH}/${SYSFLOW_CONTAINER_OUTPUT_FILENAME} ${SYSFLOW_CONTAINER_OUTPUT_PATH}
       done
       cd -
     else 
