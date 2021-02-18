@@ -22,7 +22,7 @@ function usage()
         --help                              Show this screen
         --download-date <DOWNLOAD_DATE>     The analyze date to download in format of YYYY-MM-DD
         --download-folder <DOWNLOAD_FOLDER> [optional] The base folder to save downloaded results.
-                                            Defaults to /data/results.    
+                                            Defaults to ${DEFAULT_DOWNLOAD_VT_ANALYSIS_FOLDER}.    
     "
     echo
 }
@@ -77,13 +77,14 @@ function log(){
   echo "[$(date +%FT%T)] - $1"
 }
 
+SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
+source ${SCRIPT_FOLDER}/utils.sh
+
 parse_args "$@"
 
 validate
 
-SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
 source ${SCRIPT_FOLDER}/secrets.env
-source ${SCRIPT_FOLDER}/utils.sh
 
 SYSFLOW_CONTAINER_OUTPUT_FILENAME=sysflow.log
 SYSFLOW_CONTAINER_OUTPUT_PATH=/mnt/data
