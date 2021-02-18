@@ -7,7 +7,6 @@ function usage()
 
     Usage:
       ./multiple-docker-malware-analysis.sh [--pending-analysis-folder <PENDING_ANALYSIS_FOLDER>]
-                                            [--max-parallel-analysis <MAX-PARALLEL-ANALYSIS>]
                                             [--max-duration <MAX-DURATION>] 
                                             [--output <OUTPUT>] 
                                             [--pending-upload-folder <PENDING_UPLOAD_FOLDER>]
@@ -17,8 +16,6 @@ function usage()
       --help                                                Show this screen
       --pending-analysis-folder <PENDING_ANALYSIS_FOLDER>   [optional] The folder path containing symbolic links to executables for analyze
                                                             Default: ${DEFAULT_BASE_PENDING_ANALYSIS_FOLDER}
-      --max-parallel-analysis <MAX-PARALLEL-ANALYSIS>       [optional] The number of malwares to analyze in parallel
-                                                            Default: ${DEFAULT_MAX_RUNNING_JOBS}.
       --max-duration <MAX-DURATION>                         [optional] The max duration in seconds to perform Sysflow Analysis on each malware
                                                             Default: ${DEFAULT_MAX_MALWARE_DOCKER_RUN_DURATION} seconds.
       --output <OUTPUT>                                     [optional] The base folder to save analysis outputs
@@ -77,44 +74,34 @@ function main()
 {
   SCRIPT_FOLDER=$(dirname $(readlink -f "$0"))
   source ${SCRIPT_FOLDER}/utils.sh
-  
+
   parse_args "$@"
+  exit_if_not_sudo
 
   PENDING_ANALYSIS_FOLDER=${PENDING_ANALYSIS_FOLDER:-$DEFAULT_BASE_PENDING_ANALYSIS_FOLDER}
   PENDING_UPLOAD_FOLDER=${PENDING_UPLOAD_FOLDER:-$DEFAULT_PENDING_UPLOAD_FOLDER}
-  MAX_RUNNING_JOBS=${MAX_RUNNING_JOBS:-$DEFAULT_MAX_RUNNING_JOBS}
 
-  MALWARE_FILE_NAMES=(`find ${PENDING_ANALYSIS_FOLDER} -type l -o -type f -a ! -name "*.Dockerfile"`)
+  MALWARE_FILE_NAMES=(`find ${PENDING_ANALYSIS_FOLDER} -type l`)
   TOTAL_MALWARES_COUNTER=${#MALWARE_FILE_NAMES[@]}
   NEXT_MALWARE_INDEX=0
   CURRENT_TIME=$(date +%Y-%m-%dT%H-%M-%S)
   
   while [ $NEXT_MALWARE_INDEX -lt $TOTAL_MALWARES_COUNTER ]
   do
-    running_jobs RUNNING_JOBS
-    if [ $RUNNING_JOBS -lt $MAX_RUNNING_JOBS ]; 
-    then
-      NEXT_JOBS_COUNTER=$((MAX_RUNNING_JOBS - RUNNING_JOBS))
-      LIMIT=$((NEXT_MALWARE_INDEX + NEXT_JOBS_COUNTER > TOTAL_MALWARES_COUNTER ? TOTAL_MALWARES_COUNTER : NEXT_JOBS_COUNTER + NEXT_MALWARE_INDEX))
-      for INDEX in $( seq $NEXT_MALWARE_INDEX $((LIMIT - 1)));
-      do
-        MALWARE_FILE_NAME=${MALWARE_FILE_NAMES[INDEX]}
-        EXECUTABLE_RELATIVE_PATH=$(dirname $(echo ${MALWARE_FILE_NAME} | sed "s|${PENDING_ANALYSIS_FOLDER}/||"))
-        EXECUTABLE=`readlink -f ${MALWARE_FILE_NAMES[INDEX]}`
-        echo "Starting to analysis ${EXECUTABLE}"
-        EXECUTABLE_OUTPUT_FOLDER=${OUTPUT_FOLDER:-${DEFAULT_SYSFLOW_ANALYSIS_OUTPUT_FOLDER}}
-        ${SCRIPT_FOLDER}/single-docker-malware-analysis.sh --executable ${EXECUTABLE} \
-                                                            --output ${EXECUTABLE_OUTPUT_FOLDER} \
-                                                            --pending-upload-folder ${PENDING_UPLOAD_FOLDER} \
-                                                            --output-relative-path ${EXECUTABLE_RELATIVE_PATH} \
-                                                            --runtime ${CURRENT_TIME} $PARAMS &
-        [ -L ${MALWARE_FILE_NAME} ] && unlink ${MALWARE_FILE_NAME}
-        exit_on_error $?
-        sleep 5
-      done
-      NEXT_MALWARE_INDEX=$LIMIT
-    fi
-    sleep 5
+    MALWARE_FILE_NAME=${MALWARE_FILE_NAMES[NEXT_MALWARE_INDEX]}
+    EXECUTABLE_RELATIVE_PATH=$(dirname $(echo ${MALWARE_FILE_NAME} | sed "s|${PENDING_ANALYSIS_FOLDER}/||"))
+    EXECUTABLE=`readlink -f ${MALWARE_FILE_NAMES[NEXT_MALWARE_INDEX]}`
+    log "Starting to analysis ${EXECUTABLE}"
+    EXECUTABLE_OUTPUT_FOLDER=${OUTPUT_FOLDER:-${DEFAULT_SYSFLOW_ANALYSIS_OUTPUT_FOLDER}}
+    ${SCRIPT_FOLDER}/single-docker-malware-analysis.sh --executable ${EXECUTABLE} \
+                                                        --output ${EXECUTABLE_OUTPUT_FOLDER} \
+                                                        --pending-upload-folder ${PENDING_UPLOAD_FOLDER} \
+                                                        --output-relative-path ${EXECUTABLE_RELATIVE_PATH} \
+                                                        --runtime ${CURRENT_TIME} $PARAMS
+
+    [ -L ${MALWARE_FILE_NAME} ] && unlink ${MALWARE_FILE_NAME}
+    exit_on_error $?
+    NEXT_MALWARE_INDEX=$(($NEXT_MALWARE_INDEX + 1))
   done
 }
 
