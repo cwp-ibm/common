@@ -22,8 +22,8 @@ function usage()
                                                                             in <MALWARES_CONTAINING_FOLDER> 
         --pending-analysis-folder <PENDING_ANALYSIS_FOLDER>                 [optional] The path to create the pending analysis symbolic links.
                                                                             Default: $DEFAULT_BASE_PENDING_ANALYSIS_FOLDER
-        --pending-analysis-relative-path <PENDING_ANALYSIS_RELATIVE_PATH>   [optionalpend]
-                                                                            Defaults to empty string
+        --pending-analysis-relative-path <PENDING_ANALYSIS_RELATIVE_PATH>   [optional]
+                                                                            Default: Empty string
         --force                                                             [optionsl] Create pending analysis for all malwares in <MALWARES_CONTAINING_FOLDER>
                                                                             even those how have been analyzed before.
     "
